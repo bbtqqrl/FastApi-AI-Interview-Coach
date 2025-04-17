@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 from sqlalchemy import String, DateTime
 from sqlalchemy.dialects.postgresql import UUID
@@ -15,4 +15,4 @@ class User(Base):
 
     sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")
 
-    created_at = mapped_column(DateTime, default=datetime.utcnow)
+    created_at = mapped_column(DateTime, default=datetime.now(timezone.utc))
