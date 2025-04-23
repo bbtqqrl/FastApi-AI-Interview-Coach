@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.security import OAuth2PasswordRequestForm
 
 from auth.dependencies import get_current_user
-from users import crud
+from . import crud
 from core.models import db_helper
 from .schemas import Users, UserCreate, LogInUser
 from auth.utils_jwt import create_access_token, validate_password

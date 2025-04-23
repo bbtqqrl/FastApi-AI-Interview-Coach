@@ -7,8 +7,11 @@ from core.models.base import Base
 
 class UserResponse(Base):
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    question_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("questions.id"))
+
+    question_id: Mapped[UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("questions.id", ondelete="SET NULL"), nullable=True)
     question = relationship("Question")
+
+    question_text: Mapped[str] = mapped_column(Text, nullable=False)
 
     session_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sessions.id"))
     session = relationship("Session", back_populates="responses")

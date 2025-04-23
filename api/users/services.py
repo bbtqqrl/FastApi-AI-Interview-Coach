@@ -1,5 +1,5 @@
 from fastapi import Depends, HTTPException
-from users import crud
+from . import crud
 from sqlalchemy.ext.asyncio import AsyncSession
 from core.models import db_helper
 from fastapi import status
