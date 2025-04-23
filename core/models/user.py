@@ -4,6 +4,7 @@ from sqlalchemy import String, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from core.models.base import Base
+from pprint import pformat
 
 class User(Base):
 
@@ -15,9 +16,9 @@ class User(Base):
     sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), default=datetime.now())
-    
     def __str__(self):
         return f"{self.__class__.__name__}(id={self.id}, username={self.username})"
-    
+
     def __repr__(self):
         return str(self)
+

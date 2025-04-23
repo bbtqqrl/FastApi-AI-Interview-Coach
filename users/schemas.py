@@ -9,6 +9,10 @@ class BaseUser(BaseModel):
     email: EmailStr
     password_hash: str
 
+class LogInUser(BaseModel):
+    email: EmailStr
+    password_hash: str
+
 class UserCreate(BaseUser):
     pass
 

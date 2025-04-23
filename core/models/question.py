@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 from sqlalchemy import ForeignKey, Integer, Text, DateTime
 from sqlalchemy.dialects.postgresql import UUID
@@ -17,4 +17,4 @@ class Question(Base):
     session_id = mapped_column(UUID(as_uuid=True), ForeignKey("sessions.id"), nullable=False)
     session = relationship("Session", back_populates="questions")
 
-    created_at = mapped_column(DateTime, default=datetime.utcnow)
+    created_at = mapped_column(DateTime, default=datetime.now(timezone.utc))
