@@ -7,7 +7,8 @@ from core.models.base import Base
 
 class Session(Base):
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    session_name: Mapped[str] = mapped_column(String, nullable=False)
+    topic_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("topics.id"), nullable=False)
+    topic = relationship("Topic")
 
     user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     user = relationship("User", back_populates="sessions")
