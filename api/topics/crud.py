@@ -1,9 +1,10 @@
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import insert
+from sqlalchemy import UUID, insert
 from core.models.topic import Topic
 from core.models.question import Question
-from .schemas import TopicCreate
+from .schemas import TopicCreate, TopicDelete
 
 async def create_topic(db: AsyncSession, topic_data: TopicCreate):
     new_topic = Topic(name=topic_data.name, description=topic_data.description)
@@ -17,3 +18,16 @@ async def create_topic(db: AsyncSession, topic_data: TopicCreate):
     await db.commit()
     await db.refresh(new_topic)
     return new_topic
+
+async def delete_topic(db: AsyncSession, topic_id: UUID):
+    result = await db.execute(select(Topic).where(Topic.id == topic_id))
+    topic = result.scalar_one_or_none()
+
+    if not topic:
+        raise HTTPException(status_code=404, detail="Topic not found")
+
+    await db.delete(topic)
+    await db.commit()
+
+
+

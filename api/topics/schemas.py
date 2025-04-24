@@ -8,3 +8,6 @@ class TopicCreate(BaseModel):
     name: str
     description: str
     questions: List[QuestionCreate]
+
+class TopicDelete(TopicCreate):
+    pass

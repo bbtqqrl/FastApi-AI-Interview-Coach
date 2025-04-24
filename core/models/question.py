@@ -8,7 +8,7 @@ from core.models.base import Base
 class Question(Base):
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     question_text: Mapped[str] = mapped_column(Text, nullable=False)
-    topic_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("topics.id"))
-    topic = relationship("Topic")
+    topic_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("topics.id", ondelete="CASCADE"), nullable=False)
+    topic = relationship("Topic", passive_deletes=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now(timezone.utc))
