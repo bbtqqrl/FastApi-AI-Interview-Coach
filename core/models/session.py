@@ -21,4 +21,4 @@ class Session(Base):
     overall_score: Mapped[int] = mapped_column(Integer, nullable=True) 
     overall_feedback: Mapped[str] = mapped_column(Text, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow())
