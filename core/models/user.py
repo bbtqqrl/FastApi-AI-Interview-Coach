@@ -11,6 +11,7 @@ class User(Base):
     username = mapped_column(String(32), nullable=True)
     email = mapped_column(String, unique=True, nullable=False, index=True)
     password_hash = mapped_column(String, nullable=False)
+    is_admin: Mapped[bool] = mapped_column(default=False, nullable=False, server_default="false")
 
     sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")
 
