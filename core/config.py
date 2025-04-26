@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     db: DbSettings = DbSettings()
     jwt: JWTSettings = JWTSettings()
-
+    redis: str = "redis://localhost:6379"
     model_config = SettingsConfigDict(env_file=".env", extra="ignore") 
 
 

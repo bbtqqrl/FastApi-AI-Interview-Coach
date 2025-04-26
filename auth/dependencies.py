@@ -5,7 +5,7 @@ from sqlalchemy import select
 from fastapi import Depends, HTTPException, status
 
 from .utils_jwt import verify_token
-from core import db_helper
+from core.db_helper import db_helper
 from core.models.user import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/users/login")

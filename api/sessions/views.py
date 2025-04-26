@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from api.sessions import crud as crud, schemas as schemas
-from app.api.topics import crud as topic_crud
-from app.dependencies import get_current_user, db_helper
-from app.services.redis_service import redis_service
-from app.models.user import User
+from api.sessions import crud, schemas 
+from api.dependencies import get_current_user
+from core.db_helper import db_helper
+from services.redis_service import redis_service
+from core.models.user import User
 
 router = APIRouter(prefix="/sessions", tags=["Sessions"])
 
