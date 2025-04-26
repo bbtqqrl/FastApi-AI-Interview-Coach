@@ -2,7 +2,8 @@ from typing import Annotated
 from fastapi import FastAPI, Path
 from contextlib import asynccontextmanager
 import uvicorn
-from core.models import Base, db_helper
+from core.models import Base
+from core.db_helper import db_helper
 from core.config import settings
 from api.users.views import router as users_router
 from api.topics.views import router as topics_router

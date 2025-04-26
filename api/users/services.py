@@ -1,7 +1,6 @@
 from fastapi import Depends, HTTPException
 from . import crud
 from sqlalchemy.ext.asyncio import AsyncSession
-from core.models import db_helper
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from auth.utils_jwt import create_access_token, validate_password

@@ -5,7 +5,7 @@ from typing import List
 
 from . import crud, schemas
 from api.dependencies import verify_admin
-from core.models import db_helper
+from core.db_helper import db_helper
 from .schemas import TopicOut, Topics
 
 router = APIRouter(prefix="/topics", tags=["Topics"])

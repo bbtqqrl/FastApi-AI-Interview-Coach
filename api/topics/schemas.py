@@ -2,10 +2,12 @@ from pydantic import BaseModel, Field
 from uuid import UUID
 from typing import List
 
-class QuestionOut(BaseModel):
-    id: UUID
+
+class QuestionCreate(BaseModel):
     question_text: str
 
+class QuestionOut(QuestionCreate):
+    id: UUID
     class Config:
         from_attributes = True
 
@@ -21,9 +23,6 @@ class TopicOut(Topics):
     class Config:
         from_attributes = True
 
-
-class QuestionCreate(BaseModel):
-    question_text: str
 
 class TopicCreate(BaseModel):
     name: str
