@@ -10,12 +10,11 @@ class RedisService:
     def _questions_key(self, session_id: str) -> str:
         return f"session:{session_id}:questions"
 
+    def _session_data_key(self, session_id: str) -> str:
+        return f"session:{session_id}:data"
+
     async def cache_questions(self, session_id: str, questions: List[dict]):
-        """
-        questions: список словників [{"id": str, "text": str}, ...]
-        """
         key = self._questions_key(session_id)
-        # Перетворюємо кожне питання в JSON
         questions_json = [json.dumps(q) for q in questions]
         await self.redis.rpush(key, *questions_json)
 
@@ -42,5 +41,22 @@ class RedisService:
         key = self._questions_key(session_id)
         await self.redis.delete(key)
 
-# Ініціалізація сервісу
+
+    async def set_current_question(self, session_id: str, question_id: str):
+        key = self._session_data_key(session_id)
+        await self.redis.hset(key, "current_question_id", question_id)
+
+    async def get_current_question(self, session_id: str) -> str | None:
+        key = self._session_data_key(session_id)
+        return await self.redis.hget(key, "current_question_id")
+
+    async def clear_current_question(self, session_id: str):
+        key = self._session_data_key(session_id)
+        await self.redis.hdel(key, "current_question_id")
+
+    async def delete_session_data(self, session_id: str):
+        await self.redis.delete(self._questions_key(session_id))
+        await self.redis.delete(self._session_data_key(session_id))
+
+
 redis_service = RedisService()

@@ -2,13 +2,19 @@ from uuid import UUID
 from pydantic import BaseModel
 from typing import List
 
-class SessionResponse(BaseModel):
+class SessionId(BaseModel):
     session_id: UUID
+
+class SessionResponse(SessionId):
     question_id: UUID
     question_text: str
 
-class AnswerSubmitRequest(BaseModel):
+class AnswerRequest(BaseModel):
+    session_id: UUID
     answer: str
+
+class AnswerSubmitRequest(BaseModel):
+    result: str | Exception
 
 class AnswerResult(BaseModel):
     question_id: UUID
