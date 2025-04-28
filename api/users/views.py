@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from auth.dependencies import get_current_user
 from . import crud
-from core.models import db_helper
+from core.db_helper import db_helper
 from .schemas import Users, UserCreate
 from auth.utils_jwt import create_access_token, validate_password
 from .services import check_password_login

@@ -1,6 +1,7 @@
 from redis.asyncio import Redis
 from typing import List
 from core.config import settings
+import json
 
 class RedisService:
     def __init__(self):
@@ -9,17 +10,28 @@ class RedisService:
     def _questions_key(self, session_id: str) -> str:
         return f"session:{session_id}:questions"
 
-    async def cache_questions(self, session_id: str, questions: List[str]):
+    async def cache_questions(self, session_id: str, questions: List[dict]):
+        """
+        questions: список словників [{"id": str, "text": str}, ...]
+        """
         key = self._questions_key(session_id)
-        await self.redis.rpush(key, *questions)
+        # Перетворюємо кожне питання в JSON
+        questions_json = [json.dumps(q) for q in questions]
+        await self.redis.rpush(key, *questions_json)
 
-    async def get_first_question(self, session_id: str) -> str | None:
+    async def get_question(self, session_id: str) -> dict | None:
         key = self._questions_key(session_id)
-        return await self.redis.lindex(key, 0)
+        question_json = await self.redis.lindex(key, 0)
+        if question_json:
+            return json.loads(question_json)
+        return None
 
-    async def pop_next_question(self, session_id: str) -> str | None:
+    async def pop_next_question(self, session_id: str) -> dict | None:
         key = self._questions_key(session_id)
-        return await self.redis.lpop(key)
+        question_json = await self.redis.lpop(key)
+        if question_json:
+            return json.loads(question_json)
+        return None
 
     async def has_questions_left(self, session_id: str) -> bool:
         key = self._questions_key(session_id)

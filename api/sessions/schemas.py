@@ -1,25 +1,24 @@
+from uuid import UUID
 from pydantic import BaseModel
 from typing import List
 
-class SessionStartRequest(BaseModel):
-    topic_id: int
-
 class SessionResponse(BaseModel):
-    session_id: int
-    question: str
+    session_id: UUID
+    question_id: UUID
+    question_text: str
 
 class AnswerSubmitRequest(BaseModel):
-    session_id: int
     answer: str
 
 class AnswerResult(BaseModel):
-    question: str
+    question_id: UUID
+    question_text: str
     user_answer: str
     ai_feedback: str
     score: int
 
 class SessionCompleteResponse(BaseModel):
-    session_id: int
+    session_id: UUID
     results: List[AnswerResult]
     overall_score: int
     overall_feedback: str
