@@ -10,11 +10,10 @@ class SessionResponse(SessionId):
     question_text: str
 
 class AnswerRequest(BaseModel):
-    session_id: UUID
     answer: str
 
 class AnswerSubmitRequest(BaseModel):
-    result: str | Exception
+    result: dict
 
 class AnswerResult(BaseModel):
     question_id: UUID

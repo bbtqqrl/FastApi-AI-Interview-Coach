@@ -13,6 +13,7 @@ class RedisService:
     def _session_data_key(self, session_id: str) -> str:
         return f"session:{session_id}:data"
 
+
     async def cache_questions(self, session_id: str, questions: List[dict]):
         key = self._questions_key(session_id)
         questions_json = [json.dumps(q) for q in questions]
@@ -42,17 +43,21 @@ class RedisService:
         await self.redis.delete(key)
 
 
-    async def set_current_question(self, session_id: str, question_id: str):
+    async def set_current_question(self, session_id: str, question: dict):
         key = self._session_data_key(session_id)
-        await self.redis.hset(key, "current_question_id", question_id)
+        await self.redis.hset(key, "current_question", json.dumps(question))
 
-    async def get_current_question(self, session_id: str) -> str | None:
+
+    async def get_current_question(self, session_id: str) -> dict | None:
         key = self._session_data_key(session_id)
-        return await self.redis.hget(key, "current_question_id")
-
+        question_json = await self.redis.hget(key, "current_question")
+        if question_json:
+            return json.loads(question_json)
+        return None
+    
     async def clear_current_question(self, session_id: str):
         key = self._session_data_key(session_id)
-        await self.redis.hdel(key, "current_question_id")
+        await self.redis.hdel(key, "current_question")
 
     async def delete_session_data(self, session_id: str):
         await self.redis.delete(self._questions_key(session_id))
