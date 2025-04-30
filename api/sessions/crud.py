@@ -26,12 +26,17 @@ async def add_user_answer(
     question_id: UUID,
     question_text: str,
     user_answer: str,
+    ai_feedback: str | None,
+    score: int | None
+
 ) -> UserResponse:
     answer = UserResponse(
         session_id=session_id,
         question_id=question_id,
         question_text=question_text,
         answer_text=user_answer,
+        ai_feedback=ai_feedback,
+        score=score
     )
     db.add(answer)
     await db.commit()

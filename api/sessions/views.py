@@ -1,3 +1,4 @@
+import json
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,7 +7,7 @@ from api.dependencies import get_current_user
 from core.db_helper import db_helper
 from services.redis_service import redis_service
 from core.models.user import User
-
+from . import session_service
 router = APIRouter(prefix="/sessions", tags=["Sessions"])
 
 @router.post("/{topic_id}", response_model=schemas.SessionId)
@@ -33,175 +34,39 @@ async def start_session(
 @router.post("/get-question/{session_id}", response_model=schemas.SessionResponse)
 async def send_question(
     session_id: UUID,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(db_helper.scoped_session_dependency),
+    _: User = Depends(get_current_user),
 ):
     current_question = await redis_service.get_current_question(session_id)
-    print(f"send_question current_question - {current_question}")
     if current_question:
         return schemas.SessionResponse(session_id=session_id, question_id=current_question["id"], question_text= current_question["text"])
         
     question = await redis_service.pop_next_question(session_id)
-    print(f"send_question question - {question}")
-
-
     if not question:
         raise HTTPException(status_code=404, detail="No questions left.")
 
     await redis_service.set_current_question(session_id, question)
-
     return schemas.SessionResponse(session_id=session_id, question_id=question["id"], question_text= question["text"])
 
 @router.post("/submit-answer/{session_id}", response_model=schemas.AnswerSubmitRequest | schemas.SessionCompleteResponse)
 async def send_answer(
     session_id: UUID,
     data: schemas.AnswerRequest,
-    current_user: User = Depends(get_current_user),
+    _: User = Depends(get_current_user),
     db: AsyncSession = Depends(db_helper.scoped_session_dependency),
 ):
     current_question = await redis_service.get_current_question(session_id)
     print(f"send_answer current_question - {current_question}")
+
     if not current_question:
-        raise HTTPException(
-            status_code=400,
-            detail="No question issued. Please request a question before submitting an answer."
-        )
-
-    # Зберегти відповідь в БД
-    await crud.add_user_answer(
-        db=db,
-        session_id=session_id,
-        question_id=current_question["id"],
-        question_text=current_question["text"],
-        user_answer=data.answer
-    )
-    await redis_service.clear_current_question(str(session_id))
-
+        raise HTTPException(status_code=400, detail="No question issued. Please request a question before submitting an answer." )
+    
+    await session_service.process_single_answer(db=db, session_id=session_id, current_question=current_question, data=data.answer)
     has_questions = await redis_service.has_questions_left(session_id=session_id)
 
     if has_questions:
         return schemas.AnswerSubmitRequest(result={"message": "Answer submitted successfully. Please request the next question."})
 
     else:
-        all_answers = await crud.get_session_answers(db=db, session_id=session_id)
-
-        results = [
-            schemas.AnswerResult(
-                question_id=ans.question_id,
-                question_text=ans.question_text,
-                user_answer=ans.answer_text,
-                ai_feedback="Good answer",  
-                score=8, 
-            )
-            for ans in all_answers
-        ]
-
-        overall_score = sum(r.score for r in results) // len(results)
-        overall_feedback = "Well done overall!"
-
-        # Очищення кешу в Redis
-        await redis_service.delete_questions(session_id=session_id)
-
-        return schemas.SessionCompleteResponse(
-            session_id=session_id,
-            results=results,
-            overall_score=overall_score,
-            overall_feedback=overall_feedback
-        )
+        return await session_service.complete_session(db=db, session_id=session_id)
 
 
-
-
-
-
-
-# @router.post("/{topic_id}", response_model=schemas.SessionResponse)
-# async def start_session(
-#     topic_id: UUID,
-#     current_user: User = Depends(get_current_user),
-#     db: AsyncSession = Depends(db_helper.scoped_session_dependency),
-# ):
-#     # Створюємо сесію
-#     session = await crud.create_session(
-#         db=db,
-#         user_id=current_user["id"],
-#         topic_id=topic_id
-#     )
-
-#     # Отримуємо питання топіка
-#     questions = await crud.get_topic_questions(db=db, topic_id=topic_id)
-#     if not questions:
-#         raise HTTPException(status_code=400, detail="No questions available for this topic")
-
-#     # Кешуємо питання у Redis
-#     await redis_service.cache_questions(session_id=session.id, questions=questions)
-
-#     # Витягуємо перше питання (не видаляючи)
-#     first_question = await redis_service.get_question(session_id=session.id)    
-
-#     return schemas.SessionResponse(
-#         session_id=session.id,
-#         question_id=first_question["id"],
-#         question_text=first_question['text'],
-#     )
-
-# # Надіслати відповідь на питання
-# @router.post("/answer/{session_id}", response_model=schemas.SessionResponse | schemas.SessionCompleteResponse)
-# async def submit_answer(
-#     session_id: UUID,
-#     data: schemas.AnswerRequest,
-#     current_user: User = Depends(get_current_user),
-#     db: AsyncSession = Depends(db_helper.scoped_session_dependency),
-# ):
-#     # Дістаємо поточне питання (без LPOP)
-#     current_question = await redis_service.get_question(session_id=session_id)
-#     if not current_question:
-#         raise HTTPException(status_code=400, detail="No active question found")
-
-#     # Зберігаємо відповідь в БД
-#     await crud.add_user_answer(
-#         db=db,
-#         session_id=session_id,
-#         question_id=current_question["id"],
-#         question_text=current_question["text"],
-#         user_answer=data.answer
-#     )
-
-#     # Видаляємо це питання з Redis
-#     await redis_service.pop_next_question(session_id=session_id)
-
-#     # Перевіряємо, чи є ще питання
-#     has_questions = await redis_service.has_questions_left(session_id=session_id)
-
-#     if has_questions:
-#         next_question = await redis_service.get_question(session_id=session_id)
-#         print(next_question)
-#         return schemas.SessionResponse(session_id=session_id, question_id=next_question["id"], question_text=next_question["text"])
-
-#     # Якщо питань більше нема — завершення сесії
-#     all_answers = await crud.get_session_answers(db=db, session_id=session_id)
-
-#     # Тут ти викликаєш ChatGPT для аналізу (тимчасово мок)
-#     results = [
-#         schemas.AnswerResult(
-#             question_id=ans.question_id,
-#             question_text=ans.question_text,
-#             user_answer=ans.answer_text,
-#             ai_feedback="Good answer",  # мок
-#             score=8,  # мок
-#         )
-#         for ans in all_answers
-#     ]
-
-#     overall_score = sum(r.score for r in results) // len(results)
-#     overall_feedback = "Well done overall!"
-
-#     # Очищення кешу в Redis
-#     await redis_service.delete_questions(session_id=session_id)
-
-#     return schemas.SessionCompleteResponse(
-#         session_id=session_id,
-#         results=results,
-#         overall_score=overall_score,
-#         overall_feedback=overall_feedback,
-#     )
