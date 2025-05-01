@@ -17,8 +17,12 @@ async def create_topic(db: AsyncSession, topic_data: TopicCreate):
     ]
     db.add_all(questions)
     await db.commit()
-    await db.refresh(new_topic)
-    return new_topic
+
+    result = await db.execute(
+        select(Topic).options(selectinload(Topic.questions)).where(Topic.id == new_topic.id)
+    )
+    topic_with_questions = result.scalar_one()
+    return topic_with_questions
 
 async def delete_topic(db: AsyncSession, topic_id: UUID):
     result = await db.execute(select(Topic).where(Topic.id == topic_id))

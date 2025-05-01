@@ -18,8 +18,8 @@ PROMPTS = {
     "full_session": (
         "You are an AI evaluator reviewing all answers from a candidate in a technical interview session. "
         "Analyze the answers as a whole and return a JSON with two fields:\n"
-        "- \"overall_score\": integer from 1 to 10\n"
-        "- \"summary\": short objective analysis of strengths and weaknesses.\n"
+        "- \"score\": integer from 1 to 10\n"
+        "- \"verdict\": short objective analysis of strengths and weaknesses.\n"
         "Return only the JSON, no additional comments."
     )
 }
@@ -45,12 +45,13 @@ async def get_ai_analyze(data, prompt):
         return response.choices[0].message.content
 
     raw_response = await run_in_threadpool(sync_call)
+    print(raw_response)
 
-    try:
-        parsed = json.loads(raw_response)
-        if "score" in parsed and "verdict" in parsed:
-            return parsed
-    except Exception:
-        pass
+    # try:
+    parsed = json.loads(raw_response)
+    if "score" in parsed and "verdict" in parsed:
+        return parsed
+    # except Exception:
+    #     pass
 
-    return {"score": None, "verdict": None}
+    # return {"score": None, "verdict": None}

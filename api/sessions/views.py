@@ -60,7 +60,7 @@ async def send_answer(
     if not current_question:
         raise HTTPException(status_code=400, detail="No question issued. Please request a question before submitting an answer." )
     
-    await session_service.process_single_answer(db=db, session_id=session_id, current_question=current_question, data=data.answer)
+    await session_service.process_single_answer(db=db, session_id=session_id, current_question=current_question, user_answer=data.answer)
     has_questions = await redis_service.has_questions_left(session_id=session_id)
 
     if has_questions:

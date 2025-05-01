@@ -53,11 +53,12 @@ async def complete_session(db: AsyncSession, session_id: UUID) -> schemas.Sessio
         prompt=ai_service.PROMPTS["full_session"]
     )
 
+    print(ai_analyze)
     await redis_service.delete_questions(session_id=session_id)
 
     return schemas.SessionCompleteResponse(
         session_id=session_id,
         results=results,
-        overall_score=ai_analyze.get('overall_score'),
-        overall_feedback=ai_analyze.get('summary')
+        overall_score=ai_analyze.get('score'),
+        overall_feedback=ai_analyze.get('verdict')
     )
