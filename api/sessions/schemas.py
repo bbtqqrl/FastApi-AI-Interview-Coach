@@ -25,6 +25,6 @@ class AnswerResult(BaseModel):
 class SessionCompleteResponse(BaseModel):
     session_id: UUID
     results: List[AnswerResult]
-    overall_score: int
+    overall_score: int 
     overall_feedback: str
 
