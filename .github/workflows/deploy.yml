@@ -3,7 +3,7 @@ on: [push]
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
     
     steps:
       - uses: actions/checkout@v4
@@ -17,32 +17,28 @@ jobs:
 
       - name: Login to ECR
         run: |
-          aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
       - name: Build and push
         run: |
-          docker build -t practice/fastapi_ci-cd_app .
-          docker tag practice/fastapi_ci-cd_app:latest ${{ secrets.ECR_REGISTRY }}/practice/fastapi_ci-cd_app:latest
-          docker push ${{ secrets.ECR_REGISTRY }}/practice/fastapi_ci-cd_app:latest
+          docker build -t fastapi_ci-cd_app .  # Змінили назву тегу
+          docker tag fastapi_ci-cd_app:latest ${{ secrets.ECR_REGISTRY }}:latest  # Видалили зайвий шлях
+          docker push ${{ secrets.ECR_REGISTRY }}:latest
 
       - name: Deploy to EC2 (AWS Linux)
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.EC2_IP }}
-          username: ec2-user 
+          username: ec2-user
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Оновлення Docker на Amazon Linux (якщо потрібно)
             sudo yum update -y
             sudo yum install docker -y
             sudo service docker start
-            
-            # Дозволити ec2-user керувати Docker (якщо ще не зроблено)
             sudo usermod -aG docker ec2-user
             newgrp docker
             
-            # Деплой
-            sudo docker pull ${{ secrets.ECR_REGISTRY }}/practice/fastapi_ci-cd_app:latest
+            sudo docker pull ${{ secrets.ECR_REGISTRY }}:latest  # Видалили зайвий шлях
             sudo docker stop fastapi-app || true
             sudo docker rm fastapi-app || true
-            sudo docker run -d -p 8000:8000 --name fastapi-app ${{ secrets.ECR_REGISTRY }}/practice/fastapi_ci-cd_app:latest
+            sudo docker run -d -p 8000:8000 --name fastapi-app ${{ secrets.ECR_REGISTRY }}:latest
