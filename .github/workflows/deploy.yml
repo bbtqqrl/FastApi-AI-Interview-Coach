@@ -21,9 +21,9 @@ jobs:
 
       - name: Build and push
         run: |
-          docker build -t fastapiaiinterviewcoach .
-          docker tag fastapiaiinterviewcoach:latest ${{ secrets.ECR_REGISTRY }}/fastapiaiinterviewcoach:latest
-          docker push ${{ secrets.ECR_REGISTRY }}/fastapiaiinterviewcoach:latest
+          docker build -t practice/fastapi_ci-cd_app .
+          docker tag practice/fastapi_ci-cd_app:latest ${{ secrets.ECR_REGISTRY }}/practice/fastapi_ci-cd_app:latest
+          docker push ${{ secrets.ECR_REGISTRY }}/practice/fastapi_ci-cd_app:latest
 
       - name: Deploy to EC2 (AWS Linux)
         uses: appleboy/ssh-action@v1
@@ -42,7 +42,7 @@ jobs:
             newgrp docker
             
             # Деплой
-            sudo docker pull ${{ secrets.ECR_REGISTRY }}/fastapiaiinterviewcoach:latest
+            sudo docker pull ${{ secrets.ECR_REGISTRY }}/practice/fastapi_ci-cd_app:latest
             sudo docker stop fastapi-app || true
             sudo docker rm fastapi-app || true
-            sudo docker run -d -p 8000:8000 --name fastapi-app ${{ secrets.ECR_REGISTRY }}/fastapiaiinterviewcoach:latest
+            sudo docker run -d -p 8000:8000 --name fastapi-app ${{ secrets.ECR_REGISTRY }}/practice/fastapi_ci-cd_app:latest
