@@ -1,0 +1,48 @@
+name: Deploy to AWS Linux EC2
+on: [push]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest 
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+
+      - name: Build and push
+        run: |
+          docker build -t fastapiaiinterviewcoach .
+          docker tag fastapiaiinterviewcoach:latest ${{ secrets.ECR_REGISTRY }}/fastapiaiinterviewcoach:latest
+          docker push ${{ secrets.ECR_REGISTRY }}/fastapiaiinterviewcoach:latest
+
+      - name: Deploy to EC2 (AWS Linux)
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_IP }}
+          username: ec2-user 
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Оновлення Docker на Amazon Linux (якщо потрібно)
+            sudo yum update -y
+            sudo yum install docker -y
+            sudo service docker start
+            
+            # Дозволити ec2-user керувати Docker (якщо ще не зроблено)
+            sudo usermod -aG docker ec2-user
+            newgrp docker
+            
+            # Деплой
+            sudo docker pull ${{ secrets.ECR_REGISTRY }}/fastapiaiinterviewcoach:latest
+            sudo docker stop fastapi-app || true
+            sudo docker rm fastapi-app || true
+            sudo docker run -d -p 8000:8000 --name fastapi-app ${{ secrets.ECR_REGISTRY }}/fastapiaiinterviewcoach:latest
