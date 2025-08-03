@@ -32,16 +32,18 @@ jobs:
           echo "${{ secrets.JWT_PRIVATE_PEM }}" > certs/jwt-private.pem
           echo "${{ secrets.JWT_PUBLIC_PEM }}" > certs/jwt-public.pem
 
-      - name: Upload .env and certs to EC2
+      # Зміни в кроці завантаження файлів:
+      - name: Upload files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_IP }}
           username: ec2-user
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ".env,certs/jwt-private.pem,certs/jwt-public.pem"
+          source: ".env,certs/jwt-private.pem,certs/jwt-public.pem,docker-compose.yml"  # Додали docker-compose.yml
           target: "~/app"
 
-      - name: Deploy to EC2 (AWS Linux)
+      # Новий крок деплою:
+      - name: Deploy to EC2
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.EC2_IP }}
@@ -49,19 +51,13 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             sudo yum update -y
-            sudo yum install docker -y
+            sudo yum install docker docker-compose-plugin -y
             sudo service docker start
-
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            
+            # Авторизація в ECR
             aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
-
-            sudo docker pull ${{ secrets.ECR_REGISTRY }}:latest
-            sudo docker stop fastapi-app || true
-            sudo docker rm fastapi-app || true
-
-            sudo docker run -d -p 8000:8000 \
-              --name fastapi-app \
-              --env-file ~/app/.env \
-              -v ~/app/certs:/app/certs \
-              ${{ secrets.ECR_REGISTRY }}:latest
+            
+            # Оновлення образів та запуск
+            cd ~/app
+            sudo docker compose pull
+            sudo docker compose up -d

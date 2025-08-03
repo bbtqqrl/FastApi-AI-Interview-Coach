@@ -1,16 +1,21 @@
-version: "3.9"
-
+version: '3.9'
 services:
   server:
-    build:
-      context: .
+    image: 134059028578.dkr.ecr.us-east-1.amazonaws.com/practice/fastapi_ci-cd_app:latest
     ports:
-      - 8000:8000
+      - "8000:8000"
     depends_on:
       - redis
     env_file:
       - .env
+    volumes:
+      - ./certs:/app/certs
 
   redis:
-    image: redis:7
+    image: redis:7-alpine
     restart: always
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
