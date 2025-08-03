@@ -1,34 +1,23 @@
+version: "3.8"
+
 services:
   server:
     image: 134059028578.dkr.ecr.us-east-1.amazonaws.com/practice/fastapi_ci-cd_app:latest
     ports:
       - "8000:8000"
-    depends_on:
-      redis:
-        condition: service_healthy
     env_file:
       - .env
     volumes:
       - ./certs:/app/certs
-    networks:
-      - app-network
+    depends_on:
+      - redis
 
   redis:
-    image: redis:7-alpine
+    image: redis:7
     restart: always
     volumes:
       - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 2s
-      retries: 3
-    networks:
-      - app-network
 
 volumes:
   redis_data:
 
-networks:
-  app-network:
-    driver: bridge

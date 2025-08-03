@@ -1,4 +1,5 @@
-name: Deploy to AWS Linux EC2
+name: Deploy to EC2
+
 on: [push]
 
 jobs:
@@ -19,51 +20,47 @@ jobs:
         run: |
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
-      - name: Build and push
+      - name: Build and Push Docker Image
         run: |
           docker build -t fastapi_ci-cd_app .
-          docker tag fastapi_ci-cd_app:latest ${{ secrets.ECR_REGISTRY }}:latest
-          docker push ${{ secrets.ECR_REGISTRY }}:latest
+          docker tag fastapi_ci-cd_app:latest ${{ secrets.ECR_REGISTRY }}/practice/fastapi_ci-cd_app:latest
+          docker push ${{ secrets.ECR_REGISTRY }}/practice/fastapi_ci-cd_app:latest
 
-      - name: Create .env and certs for upload
+      - name: Prepare Files
         run: |
           echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
           mkdir -p certs
           echo "${{ secrets.JWT_PRIVATE_PEM }}" > certs/jwt-private.pem
           echo "${{ secrets.JWT_PUBLIC_PEM }}" > certs/jwt-public.pem
 
-      - name: Upload files to EC2
+      - name: Upload to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_IP }}
           username: ec2-user
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ".env,certs/jwt-private.pem,certs/jwt-public.pem,docker-compose.yml" 
+          source: ".env,certs,docker-compose.yml"
           target: "~/app"
 
-      - name: Deploy to EC2
+      - name: Deploy on EC2
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.EC2_IP }}
           username: ec2-user
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-            sudo chmod +x /usr/local/bin/docker-compose
-            
-            echo "=== Перелік файлів у ~/app ==="
-            ls -la ~/app/
-            echo "=== Вміст docker-compose.yml ==="
-            cat ~/app/docker-compose.yml
-            
-            aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
-            
             cd ~/app
-            sudo /usr/local/bin/docker-compose down || true
-            sudo /usr/local/bin/docker-compose pull
-            sudo /usr/local/bin/docker-compose up -d
-            
-            echo "=== Стан контейнерів ==="
-            sudo docker ps
-            echo "=== Логи docker-compose ==="
-            sudo /usr/local/bin/docker-compose logs
+
+            # Install docker compose plugin if needed
+            if ! command -v docker compose &> /dev/null; then
+              mkdir -p ~/.docker/cli-plugins
+              curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o docker-compose
+              chmod +x docker-compose
+              sudo mv docker-compose ~/.docker/cli-plugins/docker-compose
+            fi
+
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+
+            docker compose down || true
+            docker compose pull
+            docker compose up -d
