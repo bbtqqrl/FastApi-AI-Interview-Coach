@@ -63,6 +63,5 @@ jobs:
             sudo docker run -d -p 8000:8000 \
               --name fastapi-app \
               --env-file ~/app/.env \
-              -v ~/app/jwt-private.pem:/app/certs/jwt-private.pem \
-              -v ~/app/jwt-public.pem:/app/certs/jwt-public.pem \
+              -v ~/app/certs:/app/certs \
               ${{ secrets.ECR_REGISTRY }}:latest
