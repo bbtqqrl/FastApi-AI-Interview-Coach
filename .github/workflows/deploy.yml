@@ -23,8 +23,8 @@ jobs:
       - name: Build and Push Docker Image
         run: |
           docker build -t fastapi_ci-cd_app .
-          docker tag fastapi_ci-cd_app:latest ${{ secrets.ECR_REGISTRY }}/practice/fastapi_ci-cd_app:latest
-          docker push ${{ secrets.ECR_REGISTRY }}/practice/fastapi_ci-cd_app:latest
+          docker tag fastapi_ci-cd_app:latest ${{ secrets.ECR_REGISTRY }}:latest
+          docker push ${{ secrets.ECR_REGISTRY }}:latest
 
       - name: Prepare Files
         run: |
