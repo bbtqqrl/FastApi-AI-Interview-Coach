@@ -25,7 +25,7 @@ PROMPTS = {
 }
 async def get_ai_analyze(data, prompt):
     load_dotenv()
-    token = os.environ["GITHUB_TOKEN"]
+    token = os.getenv("GITHUB_TOKEN")
 
     client = ChatCompletionsClient(
         endpoint="https://models.github.ai/inference",
