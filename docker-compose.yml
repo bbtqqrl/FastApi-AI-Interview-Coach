@@ -11,13 +11,20 @@ services:
       - ./certs:/app/certs
     depends_on:
       - redis
+    networks:  # Додано явне підключення до мережі
+      - app-network
 
   redis:
     image: redis:7
     restart: always
     volumes:
       - redis_data:/data
+    networks:  # Додано явне підключення до мережі
+      - app-network
 
 volumes:
   redis_data:
 
+networks:  # Додано визначення мережі
+  app-network:
+    driver: bridge
