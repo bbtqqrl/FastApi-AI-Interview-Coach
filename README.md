@@ -25,7 +25,7 @@ A backend project for practicing interview questions using AI analysis. Built wi
 
 pytest
 Covers:
-
+```bash
 Business logic (sessions, answers, analysis)
 
 API endpoints (async testing with httpx)
@@ -35,14 +35,15 @@ JWT auth (RS256)
 Database interactions
 
 CI/CD
+```
 GitHub Actions runs:
-
+```bash
 Automated tests
 
 Type checking (mypy)
 
 Code linting (ruff)
-
+```
 Quick Start
 ```bash
 git clone https://github.com/bbtqqrl/FastApi-AI-Interview-Coach
